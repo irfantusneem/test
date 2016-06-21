@@ -6,17 +6,17 @@ with_content_shell: true
 
 # Trusty is necessary to install Chrome.
 dist: trusty
-
 sudo: true
-before_install:
-  # Install Chrome
-  - export CHROME_BIN=/usr/bin/google-chrome
-  - sudo apt-get update; true # Ignore failures
-  - sudo apt-get install -y libappindicator1 fonts-liberation
-  - wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  - sudo dpkg -i google-chrome*.deb
-  - https://storage.googleapis.com/dart-archive/channels/
 
+# Install Chrome
+addons:
+  apt:
+    sources:
+      - google-chrome
+    packages:
+      - google-chrome-stable
+
+before_install:
   # Install Dartium
   - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/dartium-linux-x64-release.zip
   - unzip dartium-linux-x64-release.zip > /dev/null
