@@ -19,7 +19,7 @@ addons:
 before_install:
   # Install Dartium
   - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/dartium-linux-x64-release.zip
-  - unzip dartium-linux-x64-release.zip > /dev/null
+  - unzip dartium-linux-x64-release.zip
   - rm dartium-linux-x64-release.zip
-  - mv dartium-*-full-stable-*/{chrome,dartium}
+  - mv `echo dartium-*-full-stable-*`/{chrome,dartium}
   - export PATH="${PWD%/}/$(echo dartium-*-full-stable-*):$PATH"
