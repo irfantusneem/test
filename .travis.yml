@@ -1,7 +1,7 @@
 language: dart
 dart:
   - stable
-  - dev
+  # - dev
 
 # Trusty is necessary to install Chrome.
 dist: trusty
