@@ -12,14 +12,13 @@ addons:
   apt:
     sources:
       - google-chrome
+      - sourceline: deb http://gce_debian_mirror.storage.googleapis.com precise contrib non-free
+      - sourceline: deb http://gce_debian_mirror.storage.googleapis.com precise-updates contrib non-free
     packages:
       - google-chrome-stable
 
 before_install:
   # Install Content Shell
-  - sudo sh -c 'echo \\"deb http://gce_debian_mirror.storage.googleapis.com precise contrib non-free\\" >> /etc/apt/sources.list'
-  - sudo sh -c 'echo \\"deb http://gce_debian_mirror.storage.googleapis.com precise-updates contrib non-free\\" >> /etc/apt/sources.list'
-  - sudo sh -c 'apt-get update'
   - sudo sh -c 'echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections'
   - sudo sh -c 'apt-get install --no-install-recommends -y -q chromium-browser libudev0 ttf-kochi-gothic ttf-kochi-mincho ttf-mscorefonts-installer ttf-indic-fonts ttf-dejavu-core ttf-indic-fonts-core fonts-thai-tlwg msttcorefonts xvfb'
   - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/content_shell-linux-x64-release.zip
