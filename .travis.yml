@@ -22,6 +22,10 @@ before_install:
   - rm content_shell-linux-x64-release.zip
   - export PATH="${PWD%/}/$(echo drt-*-full-stable-*):$PATH"
 
+  # Test Content Shell
+  - content_shell --dump-render-tree "http://google.com"
+  - content_shell --dump-render-tree --remote-debugging-port=12345 "http://google.com"
+
   # Install Dartium
   - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/dartium-linux-x64-release.zip
   - unzip dartium-linux-x64-release.zip

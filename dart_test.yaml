@@ -1,6 +1,8 @@
 # Terse traces hide frames from test itself, which is bad.
 verbose_trace: true
 
+include_tags: content-shell
+
 tags:
   browser: {timeout: 2x}
   dart2js:
