@@ -1,7 +1,7 @@
 language: dart
 dart:
   - stable
-  # - dev
+  - dev
 
 # Trusty is necessary to install Chrome.
 dist: trusty
@@ -27,13 +27,6 @@ before_install:
   - unzip content_shell-linux-x64-release.zip
   - rm content_shell-linux-x64-release.zip
   - export PATH="${PWD%/}/$(echo drt-*-full-stable-*):$PATH"
-
-  # Test Content Shell
-  - echo $DISPLAY
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-  - content_shell --dump-render-tree "http://google.com"
-  - content_shell --dump-render-tree --remote-debugging-port=12345 "http://google.com"
 
   # Install Dartium
   - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/dartium-linux-x64-release.zip
