@@ -1,7 +1,7 @@
 # Terse traces hide frames from test itself, which is bad.
 verbose_trace: true
 
-timeout: 2x
+timeout: 10x
 
 tags:
   browser: {timeout: 2x}
