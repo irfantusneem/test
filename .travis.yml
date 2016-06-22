@@ -29,6 +29,9 @@ before_install:
   - export PATH="${PWD%/}/$(echo drt-*-full-stable-*):$PATH"
 
   # Test Content Shell
+  - echo $DISPLAY
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
   - content_shell --dump-render-tree "http://google.com"
   - content_shell --dump-render-tree --remote-debugging-port=12345 "http://google.com"
 
