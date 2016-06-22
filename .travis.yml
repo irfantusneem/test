@@ -28,6 +28,11 @@ before_install:
   - rm content_shell-linux-x64-release.zip
   - export PATH="${PWD%/}/$(echo drt-*-full-stable-*):$PATH"
 
+  # Give browsers a display to run against.
+  - echo $DISPLAY
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+
   # Install Dartium
   - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/dartium-linux-x64-release.zip
   - unzip dartium-linux-x64-release.zip
