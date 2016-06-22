@@ -17,7 +17,7 @@ addons:
 
 before_install:
   # Install Content Shell
-  - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/content_shell/content_shell-linux-x64-release.zip
+  - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/content_shell-linux-x64-release.zip
   - unzip content_shell-linux-x64-release.zip
   - rm content_shell-linux-x64-release.zip
   - export PATH="${PWD%/}/$(echo drt-*-full-stable-*):$PATH"
