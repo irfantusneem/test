@@ -17,6 +17,8 @@ addons:
       - google-chrome-stable
 
 before_install:
+  - content_shell
+
   # Install Dartium
   - wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/dartium/dartium-linux-x64-release.zip
   - unzip dartium-linux-x64-release.zip
