@@ -14,6 +14,8 @@ addons:
       - google-chrome
       - sourceline: deb http://gce_debian_mirror.storage.googleapis.com precise contrib non-free
       - sourceline: deb http://gce_debian_mirror.storage.googleapis.com precise-updates contrib non-free
+      - sourceline: deb http://us.archive.ubuntu.com/ubuntu/ trusty multiverse
+      - sourceline: deb http://us.archive.ubuntu.com/ubuntu/ trusty-updates multiverse
     packages:
       - google-chrome-stable
 
