@@ -221,9 +221,11 @@ class Invoker {
     var timeout = liveTest.test.metadata.timeout
         .apply(new Duration(seconds: 30));
     if (timeout == null) return;
+    print("Doing a heartbeat for $timeout");
     _timeoutTimer = _invokerZone.createTimer(timeout, () {
       _outstandingCallbackZones.last.run(() {
         if (liveTest.isComplete) return;
+        print("I guess we timed out - $timeout");
         _handleError(
             new TimeoutException(
                 "Test timed out after ${niceDuration(timeout)}.", timeout));

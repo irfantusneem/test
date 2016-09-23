@@ -121,7 +121,7 @@ class LoadSuite extends Suite implements RunnerSuite {
           {String path, TestPlatform platform})
       : super(new Group.root([
         new LocalTest(name,
-            new Metadata(timeout: new Timeout(new Duration(minutes: 5))),
+            new Metadata(timeout: new Timeout(new Duration(minutes: 10))),
             body)
       ]), path: path, platform: platform);
 

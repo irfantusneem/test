@@ -43,6 +43,7 @@ class ContentShell extends Browser {
         if (debug) {
           observatoryCompleter.complete(lineSplitter.bind(process.stdout)
               .map((line) {
+            print('stdout:\t$line');
             var match = _observatoryRegExp.firstMatch(line);
             if (match == null) return null;
             return Uri.parse(match[1]);
@@ -59,6 +60,8 @@ class ContentShell extends Browser {
         // renderer sanxbox" message.
         while (await stderr.moveNext() &&
             !stderr.current.endsWith("Running without renderer sandbox")) {
+          print('stderr:\t${stderr.current}');
+
           if (stderr.current == "[dartToStderr]: Dartium build has expired") {
             stderr.cancel();
             process.kill();

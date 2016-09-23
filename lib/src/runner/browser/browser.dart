@@ -66,6 +66,7 @@ abstract class Browser {
     // request instead.
     runZoned(() async {
       var process = await startBrowser();
+
       _processCompleter.complete(process);
 
       var exitCode = await process.exitCode;
