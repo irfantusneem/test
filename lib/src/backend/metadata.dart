@@ -19,6 +19,12 @@ import 'test_platform.dart';
 /// This metadata comes from declarations on the test itself; it doesn't include
 /// configuration from the user.
 class Metadata {
+  /// Empty metadata with only default values.
+  ///
+  /// Using this is slightly more efficient than manually constructing a new
+  /// metadata with no arguments.
+  static final empty = new Metadata._();
+
   /// The selector indicating which platforms the suite supports.
   final PlatformSelector testOn;
 

@@ -18,6 +18,7 @@ import '../../frontend/timeout.dart';
 import '../../utils.dart';
 import '../../util/io.dart';
 import '../configuration.dart';
+import 'suite.dart';
 import 'values.dart';
 
 /// Loads configuration information from a YAML file at [path].
@@ -76,11 +77,14 @@ class _ConfigurationLoader {
 
     var timeout = _parseValue("timeout", (value) => new Timeout.parse(value));
 
-    var onPlatform = _getMap("on_platform",
+    var onPlatformWithPresets = _getMap("on_platform",
         key: (keyNode) => _parseNode(keyNode, "on_platform key",
             (value) => new PlatformSelector.parse(value)),
         value: (valueNode) =>
-            _nestedConfig(valueNode, "on_platform value", runnerConfig: false));
+            _nestedConfig(valueNode, "on_platform value",
+                minLevel: _Level.suite));
+    var config = _extractPresets(onPlatformWithPresets,
+        (onPlatform) => new Configuration(onPlatform: onPlatform));
 
     var onOS = _getMap("on_os", key: (keyNode) {
       _validate(keyNode, "on_os key must be a string.",
@@ -98,12 +102,11 @@ class _ConfigurationLoader {
         key: (keyNode) => _parseIdentifierLike(keyNode, "presets key"),
         value: (valueNode) => _nestedConfig(valueNode, "presets value"));
 
-    var config = new Configuration(
+    return config.merge(new Configuration(
         verboseTrace: verboseTrace,
         jsTrace: jsTrace,
         timeout: timeout,
-        onPlatform: onPlatform,
-        presets: presets);
+        presets: presets));
 
     var osConfig = onOS[currentOS];
     return osConfig == null ? config : config.merge(osConfig);
@@ -137,18 +140,19 @@ class _ConfigurationLoader {
     var addTags = _getList("add_tags",
         (tagNode) => _parseIdentifierLike(tagNode, "Tag name"));
 
-    var tags = _getMap("tags",
+    var tagsWithPresets = _getMap("tags",
         key: (keyNode) => _parseNode(keyNode, "tags key",
             (value) => new BooleanSelector.parse(value)),
         value: (valueNode) =>
             _nestedConfig(valueNode, "tag value", runnerConfig: false));
+    var config = _extractPresets(tagsWithPresets,
+        (tags) => new Configuration(tags: tags));
 
-    return new Configuration(
+    return config.merge(new Configuration(
         skip: skip,
         skipReason: skipReason,
         testOn: testOn,
-        addTags: addTags,
-        tags: tags);
+        addTags: addTags));
   }
 
   /// Loads runner configuration that's allowed in the global configuration
@@ -385,6 +389,28 @@ class _ConfigurationLoader {
         global: _global,
         runnerConfig: runnerConfig ?? _runnerConfig);
     return loader.load();
+  }
+
+  Configuration _extractPresets/*<T>*/(
+      Map/*<T, Configuration>*/ map,
+      Configuration create(Map/*<T, SuiteConfiguration>*/ map)) {
+    if (map.isEmpty) return Configuration.empty;
+
+    var base = /*<T, SuiteConfiguration>*/{};
+    var presets = <String, Map/*<T, SuiteConfiguration>*/>{};
+    map.forEach((key, config) {
+      base[key] = config.suite;
+      value.presets.forEach((preset, presetConfig) {
+        presets.putIfAbsent(preset, () => {})[key] = presetConfig.suite;
+      }):
+    });
+
+    if (presets.isEmpty) {
+      return base.isEmpty ? Configuration.empty : create(base);
+    } else {
+      return create(base)
+          .change(presets: mapMap(presets, value: (_, map) => create(map)));
+    }
   }
 
   /// Throws an error if a field named [field] exists at this level.
