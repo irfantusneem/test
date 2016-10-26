@@ -124,9 +124,11 @@ class Runner {
 
     if (_closed) return false;
 
-    if (_engine.passed.length == 0 && _engine.failed.length == 0 &&
-        _engine.skipped.length == 0 && _config.patterns.isNotEmpty) {
-      var patterns = toSentence(_config.patterns.map(
+    if (_engine.passed.length == 0 &&
+        _engine.failed.length == 0 &&
+        _engine.skipped.length == 0 &&
+        _config.suiteDefaults.patterns.isNotEmpty) {
+      var patterns = toSentence(_config.suiteDefaults.patterns.map(
           (pattern) => pattern is RegExp
               ? 'regular expression "${pattern.pattern}"'
               : '"$pattern"'));
@@ -142,10 +144,10 @@ class Runner {
   /// Emits a warning if the user is trying to run on a platform that's
   /// unsupported for the entire package.
   void _warnForUnsupportedPlatforms() {
-    if (_config.testOn == PlatformSelector.all) return;
+    if (_config.suiteDefaults.testOn == PlatformSelector.all) return;
 
-    var unsupportedPlatforms = _config.platforms.where((platform) {
-      return !_config.testOn.evaluate(platform, os: currentOS);
+    var unsupportedPlatforms = _config.allPlatforms.where((platform) {
+      return !_config.suiteDefaults.testOn.evaluate(platform, os: currentOS);
     }).toList();
     if (unsupportedPlatforms.isEmpty) return;
 
@@ -160,7 +162,7 @@ class Runner {
     if (unsupportedBrowsers.isNotEmpty) {
       var supportsAnyBrowser = TestPlatform.all
           .where((platform) => platform.isBrowser)
-          .any((platform) => _config.testOn.evaluate(platform));
+          .any((platform) => _config.suiteDefaults.testOn.evaluate(platform));
 
       if (supportsAnyBrowser) {
         unsupportedNames.addAll(
@@ -174,7 +176,7 @@ class Runner {
     // that's because of the current OS or whether the VM is unsupported.
     if (unsupportedPlatforms.contains(TestPlatform.vm)) {
       var supportsAnyOS = OperatingSystem.all.any((os) =>
-          _config.testOn.evaluate(TestPlatform.vm, os: os));
+          _config.suiteDefaults.testOn.evaluate(TestPlatform.vm, os: os));
 
       if (supportsAnyOS) {
         unsupportedNames.add(currentOS.name);
@@ -243,18 +245,23 @@ class Runner {
       return loadSuite.changeSuite((suite) {
         _warnForUnknownTags(suite);
 
+        var suiteConfig = _config.forSuite(suite);
         return _shardSuite(suite.filter((test) {
           // Skip any tests that don't match all the given patterns.
-          if (!_config.patterns
+          if (!suiteConfig.patterns
               .every((pattern) => test.name.contains(pattern))) {
             return false;
           }
 
           // If the user provided tags, skip tests that don't match all of them.
-          if (!_config.includeTags.evaluate(test.metadata.tags)) return false;
+          if (!suiteConfig.includeTags.evaluate(test.metadata.tags)) {
+            return false;
+          }
 
           // Skip tests that do match any tags the user wants to exclude.
-          if (_config.excludeTags.evaluate(test.metadata.tags)) return false;
+          if (suiteConfig.excludeTags.evaluate(test.metadata.tags)) {
+            return false;
+          }
 
           return true;
         }));
@@ -363,7 +370,7 @@ class Runner {
   /// Loads each suite in [suites] in order, pausing after load for platforms
   /// that support debugging.
   Future<bool> _loadThenPause(Stream<LoadSuite> suites) async {
-    if (_config.platforms.contains(TestPlatform.vm)) {
+    if (_config.allPlatforms.contains(TestPlatform.vm)) {
       warn("Debugging is currently unsupported on the Dart VM.",
           color: _config.color);
     }

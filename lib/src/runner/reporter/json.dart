@@ -43,14 +43,17 @@ class JsonReporter implements Reporter {
   /// The set of all subscriptions to various streams.
   final _subscriptions = new Set<StreamSubscription>();
 
-  /// An expando that associates unique IDs with [LiveTest]s.
-  final _liveTestIDs = new Map<LiveTest, int>();
+  /// An expando that maps [LiveTest]s to  unique IDs.
+  final _liveTestIDs = new Expando<int>{};
 
-  /// An expando that associates unique IDs with [Suite]s.
-  final _suiteIDs = new Map<Suite, int>();
+  /// An expando that maps [Suite]s to unique IDs and configurations.
+  final _suitePairs = <Suite, Pair<int, SuiteConfiguration>>{};
+
+  /// The configurations for each [Suite].
+  final _suiteConfigs = <Suite, SuiteConfiguration>{};
 
   /// An expando that associates unique IDs with [Group]s.
-  final _groupIDs = new Map<Group, int>();
+  final _groupIDs = <Group, int>{};
 
   /// The next ID to associate with a [LiveTest].
   var _nextID = 0;
@@ -114,6 +117,7 @@ class JsonReporter implements Reporter {
     }
 
     var suiteID = _idForSuite(liveTest.suite);
+    var suiteConfig = _suiteConfigs[liveTest.suite];
 
     // Don't emit groups for load suites. They're always empty and they provide
     // unnecessary clutter.
@@ -129,7 +133,7 @@ class JsonReporter implements Reporter {
         "name": liveTest.test.name, 
         "suiteID": suiteID,
         "groupIDs": groupIDs,
-        "metadata": _serializeMetadata(liveTest.test.metadata)
+        "metadata": _serializeMetadata(suiteConfig, liveTest.test.metadata)
       }, liveTest.test, liveTest.suite.platform)
     });
 
@@ -150,15 +154,15 @@ class JsonReporter implements Reporter {
     }));
   }
 
-  /// Returns an ID for [suite].
+  /// Returns an ID and a [SuiteConfiguration] for [suite].
   ///
-  /// If [suite] doesn't have an ID yet, this assigns one and emits a new event
-  /// for that suite.
-  int _idForSuite(Suite suite) {
-    if (_suiteIDs.containsKey(suite)) return _suiteIDs[suite];
+  /// If [suite] hasn't been processed yet, this emits a new event for it.
+  Tuple2<int, SuiteConfiguration> _dataForSuite(Suite suite) {
+    if (_suitePairs.containsKey(suite)) return _suitePairs[suite];
 
     var id = _nextID++;
     _suiteIDs[suite] = id;
+    _suiteConfigs[suite] = _config.forSuite(suite);
 
     // Give the load suite's suite the same ID, because it doesn't have any
     // different metadata.
@@ -232,8 +236,9 @@ class JsonReporter implements Reporter {
     _emit("error", {
       "testID": _liveTestIDs[liveTest],
       "error": error.toString(),
-      "stackTrace": terseChain(stackTrace, verbose: _config.verboseTrace)
-          .toString(),
+      "stackTrace":
+          terseChain(stackTrace, verbose: _config.suiteDefaults.verboseTrace)
+              .toString(),
       "isFailure": error is TestFailure
     });
   }

@@ -47,7 +47,8 @@ class CompilerPool {
   ///
   /// The returned [Future] will complete once the `dart2js` process completes
   /// *and* all its output has been printed to the command line.
-  Future compile(String dartPath, String jsPath) {
+  Future compile(String dartPath, String jsPath,
+      SuiteConfiguration suiteConfig) {
     return _pool.withResource(() {
       if (_closed) return null;
 
@@ -75,7 +76,7 @@ class CompilerPool {
           wrapperPath,
           "--out=$jsPath",
           await PackageResolver.current.processArgument
-        ]..addAll(_config.dart2jsArgs);
+        ]..addAll(suiteConfig.dart2jsArgs);
 
         if (_config.color) args.add("--enable-diagnostic-colors");
 

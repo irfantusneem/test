@@ -81,20 +81,15 @@ class Loader {
     }
   }
 
-  /// Loads all test suites in [dir].
+  /// Loads all test suites in [dir] according to [suiteConfig].
   ///
-  /// This will load tests from files that match the configuration's filename
-  /// glob. Any tests that fail to load will be emitted as [LoadException]s.
+  /// This will load tests from files that match the global configuration's
+  /// filename glob. Any tests that fail to load will be emitted as
+  /// [LoadException]s.
   ///
   /// This emits [LoadSuite]s that must then be run to emit the actual
   /// [RunnerSuite]s defined in the file.
-  ///
-  /// If [platforms] is passed, these suites will only be loaded on those
-  /// platforms. It must be a subset of the current configuration's platforms.
-  /// Note that the suites aren't guaranteed to be loaded on all platforms in
-  /// [platforms]: their `@TestOn` declarations are still respected.
-  Stream<LoadSuite> loadDir(String dir, {Iterable<TestPlatform> platforms}) {
-    platforms = _validatePlatformSubset(platforms);
+  Stream<LoadSuite> loadDir(String dir, SuiteConfiguration suiteConfig) {
     return StreamGroup.merge(new Directory(dir).listSync(recursive: true)
         .map((entry) {
       if (entry is! File) return new Stream.fromIterable([]);
@@ -107,39 +102,29 @@ class Loader {
          return new Stream.fromIterable([]);
       }
 
-      return loadFile(entry.path);
+      return loadFile(entry.path, suiteConfig);
     }));
   }
 
-  /// Loads a test suite from the file at [path].
+  /// Loads a test suite from the file at [path] according to [suiteConfig].
   ///
   /// This emits [LoadSuite]s that must then be run to emit the actual
   /// [RunnerSuite]s defined in the file.
   ///
-  /// If [platforms] is passed, these suites will only be loaded on those
-  /// platforms. It must be a subset of the current configuration's platforms.
-  /// Note that the suites aren't guaranteed to be loaded on all platforms in
-  /// [platforms]: their `@TestOn` declarations are still respected.
-  ///
   /// This will emit a [LoadException] if the file fails to load.
-  Stream<LoadSuite> loadFile(String path, {Iterable<TestPlatform> platforms}) =>
-      // Ensure that the right config is current when invoking platform plugins.
-      _config.asCurrent(() async* {
-    platforms = _validatePlatformSubset(platforms);
-
-    var suiteMetadata;
+  Stream<LoadSuite> loadFile(String path, SuiteConfiguration suiteConfig)
+      async* {
     try {
-      suiteMetadata = parseMetadata(path);
+      suiteConfig = suiteConfig.merge(
+          new SuiteConfiguration(metadata: parseMetadata(path)));
     } on AnalyzerErrorGroup catch (_) {
       // Ignore the analyzer's error, since its formatting is much worse than
       // the VM's or dart2js's.
-      suiteMetadata = new Metadata();
     } on FormatException catch (error, stackTrace) {
       yield new LoadSuite.forLoadException(
           new LoadException(path, error), stackTrace: stackTrace);
       return;
     }
-    suiteMetadata = _config.metadata.merge(suiteMetadata);
 
     if (_config.pubServeUrl != null && !p.isWithin('test', path)) {
       yield new LoadSuite.forLoadException(new LoadException(
@@ -147,18 +132,21 @@ class Loader {
       return;
     }
 
-    for (var platform in platforms ?? _config.platforms) {
-      if (!suiteMetadata.testOn.evaluate(platform, os: currentOS)) continue;
+    for (var platform in platforms ?? suiteConfig.platforms) {
+      if (!suiteConfig.metadata.testOn.evaluate(platform, os: currentOS)) {
+        continue;
+      }
 
-      var metadata = suiteMetadata.forPlatform(platform, os: currentOS);
+      var platformConfig = suiteConfig.forPlatform(platform, os: currentOS);
 
       // Don't load a skipped suite.
-      if (metadata.skip && !_config.runSkipped) {
+      if (platformConfig.metadata.skip && !platformConfig.runSkipped) {
         yield new LoadSuite.forSuite(new RunnerSuite(
             const PluginEnvironment(),
+            platformConfig,
             new Group.root(
-                [new LocalTest("(suite)", metadata, () {})],
-                metadata: metadata),
+                [new LocalTest("(suite)", platformConfig.metadata, () {})],
+                metadata: platformConfig.metadata),
             path: path, platform: platform));
         continue;
       }
@@ -169,7 +157,7 @@ class Loader {
 
         try {
           var plugin = await memo.runOnce(_platformCallbacks[platform]);
-          var suite = await plugin.load(path, platform, metadata);
+          var suite = await plugin.load(path, platform, platformConfig);
           _suites.add(suite);
           return suite;
         } catch (error, stackTrace) {
@@ -179,18 +167,6 @@ class Loader {
       }, path: path, platform: platform);
     }
   });
-
-  /// Asserts that [platforms] is a subset of [_config.platforms], and returns
-  /// it as a set.
-  ///
-  /// Returns `null` if [platforms] is `null`.
-  Set<TestPlatform> _validatePlatformSubset(Iterable<TestPlatform> platforms) {
-    if (platforms == null) return null;
-    platforms = platforms.toSet();
-    if (platforms.every(_config.platforms.contains)) return platforms;
-    throw new ArgumentError.value(platforms, 'platforms',
-        "must be a subset of ${_config.platforms}.");
-  }
 
   Future closeEphemeral() async {
     await Future.wait(_platformPlugins.values.map((memo) async {

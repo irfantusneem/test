@@ -204,7 +204,8 @@ class CompactReporter implements Reporter {
 
     if (error is! LoadException) {
       print(indent(error.toString()));
-      var chain = terseChain(stackTrace, verbose: _config.verboseTrace);
+      var chain = terseChain(stackTrace,
+          verbose: _config.suiteDefaults.verboseTrace);
       print(indent(chain.toString()));
       return;
     }
@@ -350,7 +351,7 @@ class CompactReporter implements Reporter {
       name = "${liveTest.suite.path}: $name";
     }
 
-    if (_config.platforms.length > 1 && liveTest.suite.platform != null) {
+    if (_config.allPlatforms.length > 1 && liveTest.suite.platform != null) {
       name = "[${liveTest.suite.platform.name}] $name";
     }
 

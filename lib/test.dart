@@ -52,6 +52,7 @@ Declarer get _declarer {
   scheduleMicrotask(() async {
     var suite = new RunnerSuite(
         const PluginEnvironment(),
+        SuiteConfiguration.empty,
         _globalDeclarer.build(),
         path: p.prettyUri(Uri.base),
         platform: TestPlatform.vm,
